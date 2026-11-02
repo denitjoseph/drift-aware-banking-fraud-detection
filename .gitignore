@@ -226,3 +226,17 @@ __pycache__/
 .ipynb_checkpoints/
 data/raw/
 data/processed/
+
+# Generated ML model artifacts
+models/*.pkl
+
+# Generated model evaluation reports
+models/*.csv
+models/*.json
+
+# Python virtual environment
+.venv/
+
+# Dataset files
+data/raw/
+data/processed/

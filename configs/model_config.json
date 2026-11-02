@@ -1,0 +1,7 @@
+{
+    "model_name": "Random Forest",
+    "model_file": "models/fraud_detection_pipeline.pkl",
+    "classification_threshold": 0.4,
+    "threshold_selection_metric": "F1 Score",
+    "threshold_selection_note": "Selected using the validation dataset. Final test evaluation was performed separately."
+}
