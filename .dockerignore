@@ -1,0 +1,35 @@
+# Git
+.git
+.gitignore
+
+# Virtual environments
+.venv
+venv
+env
+ENV
+
+# Python bytecode and caches
+__pycache__
+*.py[cod]
+*$py.class
+.pytest_cache
+
+# Large datasets (handled by data versioning/storage, not container image)
+data/
+
+# Documentation and project notes
+docs/
+*.md
+
+# Notebooks and development scripts
+notebooks/
+.ipynb_checkpoints
+
+# Unit and integration tests
+tests/
+pytest.ini
+
+# IDE and editor settings
+.vscode/
+.idea/
+

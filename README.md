@@ -2,36 +2,34 @@
 
 An end-to-end MLOps platform for detecting fraudulent banking transactions, monitoring model performance and data drift, and automating model retraining and deployment on Kubernetes.
 
-> **Project Status:** Phase 1 — Foundation and Dataset Preparation
+> **Project Status:** Phase 3 Completed — Model Serving with FastAPI and Docker
+
+---
 
 ## Overview
 
-This project aims to build an industrial-style MLOps platform for banking fraud detection.
+This project builds an industrial-grade MLOps platform for banking fraud detection.
 
-The platform will use machine learning to identify potentially fraudulent transactions and combine DevOps and MLOps practices to automate the model lifecycle.
+The platform combines machine learning to identify fraudulent transactions with automated DevOps and MLOps practices across the full model lifecycle:
 
-The long-term objective is to create a system that can:
+- Train, evaluate, and tune fraud detection models.
+- Package inference services into lightweight, secure Docker containers.
+- Deploy and orchestrate model services on Kubernetes.
+- Provide health probes, request validation, and interactive API documentation.
+- Monitor application performance, metrics, and data drift *(upcoming)*.
+- Automate retraining and GitOps deployment *(upcoming)*.
 
-- Train and validate fraud detection models.
-- Track experiments and manage model versions.
-- Package models using Docker.
-- Deploy model services on Kubernetes.
-- Monitor application health and model performance.
-- Detect data drift and prediction drift.
-- Trigger automated model retraining when drift is detected.
-- Deploy validated models through a GitOps workflow.
-
-**Note:** This project is under active development. Planned capabilities are not yet implemented.
+---
 
 ## Business Use Case
 
 **Banking Fraud Detection**
 
-Financial institutions need to identify fraudulent transactions while minimizing false alerts on legitimate transactions.
+Financial institutions must identify fraudulent transactions in real-time while minimizing false alerts for legitimate customers.
 
-This project uses an anonymized credit card transaction dataset to develop and demonstrate a fraud detection pipeline.
+This platform uses an imbalanced credit card transaction dataset and trains an optimized Random Forest pipeline with a tuned classification threshold (`0.40`), prioritizing recall and precision-recall AUC (PR-AUC) over naive accuracy.
 
-The dataset is highly imbalanced, making fraud recall, precision and PR-AUC important evaluation metrics.
+---
 
 ## Planned Architecture
 
@@ -58,7 +56,7 @@ The dataset is highly imbalanced, making fraud recall, precision and PR-AUC impo
              Quality Gate
                    |
                    v
-           DOCKER IMAGE
+           DOCKER IMAGE  <--- [PHASE 3 COMPLETED]
                    |
                    v
          CONTAINER REGISTRY
@@ -67,7 +65,7 @@ The dataset is highly imbalanced, making fraud recall, precision and PR-AUC impo
           KUBERNETES DEPLOYMENT
                    |
                    v
-             MODEL API
+             MODEL API  <--- [FASTAPI SERVING]
                    |
           -------------------
           |                 |
@@ -88,56 +86,67 @@ The dataset is highly imbalanced, making fraud recall, precision and PR-AUC impo
                      GITOPS DEPLOYMENT
 ```
 
-*Architecture represents the planned target system and may evolve during implementation.*
+---
 
 ## Technology Stack
 
-| Category | Technologies |
-|---|---|
-| Programming | Python |
-| Data Processing | Pandas, NumPy |
-| Machine Learning | Scikit-learn |
-| Visualization | Matplotlib, Seaborn |
-| Experiment Tracking | MLflow (planned) |
-| Data Versioning | DVC (planned) |
-| API Development | FastAPI (planned) |
-| Containerization | Docker (planned) |
-| Orchestration | Kubernetes (planned) |
-| Infrastructure as Code | Terraform (planned) |
-| CI/CD | GitHub Actions (planned) |
-| GitOps | Argo CD (planned) |
-| Monitoring | Prometheus, Grafana (planned) |
-| Drift Detection | Evidently (planned) |
-| Cloud | AWS EKS (planned) |
+| Category | Technologies | Status |
+|---|---|---|
+| Programming | Python 3.13 | Active |
+| Data Processing | Pandas, NumPy | Active |
+| Machine Learning | Scikit-learn (Random Forest Pipeline) | Active |
+| API Development | FastAPI, Pydantic, Uvicorn | Active |
+| Containerization | Docker (python:3.13-slim) | Active |
+| Testing | Pytest, FastAPI TestClient | Active |
+| Experiment Tracking | MLflow | Planned |
+| Data Versioning | DVC | Planned |
+| Orchestration | Kubernetes (EKS) | Planned |
+| Infrastructure as Code | Terraform | Planned |
+| CI/CD | GitHub Actions | Planned |
+| GitOps | Argo CD | Planned |
+| Monitoring | Prometheus, Grafana | Planned |
+| Drift Detection | Evidently | Planned |
 
-## Dataset
+---
 
-**Dataset:** Credit Card Fraud Detection
+## API Endpoints
 
-**Source:** [Kaggle — mlg-ulb Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
+The inference API is built using **FastAPI** and validates incoming transactions against 30 required numerical features using **Pydantic**:
 
-Dataset characteristics:
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/` | API status and root welcome message |
+| `GET` | `/health` | Liveness & readiness probe returning model loading status |
+| `POST` | `/predict` | Evaluates a transaction and returns fraud prediction |
+| `GET` | `/docs` | Interactive Swagger UI documentation |
+| `GET` | `/redoc` | ReDoc interactive documentation |
 
-| Metric | Value |
-|---|---:|
-| Total transactions | 284,807 |
-| Total columns | 31 |
-| Legitimate transactions | 284,315 |
-| Fraudulent transactions | 492 |
-| Missing values | 0 |
-| Duplicate occurrences | 1,081 |
-| Fraud percentage | 0.1727% |
+### Example Prediction Request (`POST /predict`)
 
-### Dataset Features
+```json
+{
+  "Time": 406.0,
+  "V1": -2.3122, "V2": 1.9520, "V3": -1.6099, "V4": 3.9979, "V5": -0.5222,
+  "V6": -1.4265, "V7": -2.5374, "V8": 1.3917, "V9": -2.7701, "V10": -2.7723,
+  "V11": 3.2020, "V12": -2.8999, "V13": -0.5952, "V14": -4.2893, "V15": 0.3897,
+  "V16": -1.1407, "V17": -2.8301, "V18": -0.0168, "V19": 0.4170, "V20": 0.1269,
+  "V21": 0.5172, "V22": -0.0350, "V23": -0.4652, "V24": 0.3202, "V25": 0.0445,
+  "V26": 0.1778, "V27": 0.2611, "V28": -0.1433,
+  "Amount": 0.0
+}
+```
 
-- `Time`: Time elapsed since the first transaction.
-- `V1` to `V28`: Anonymized PCA-transformed features.
-- `Amount`: Transaction amount.
-- `Class`: Target variable (`0` = legitimate, `1` = fraudulent).
+### Example Prediction Response
 
-The original dataset is preserved in the local `data/raw/` directory and excluded from Git tracking.
+```json
+{
+  "fraud_probability": 0.6,
+  "classification_threshold": 0.4,
+  "prediction": "FRAUD"
+}
+```
 
-This is an anonymized benchmark dataset, not real production banking data.
+---
 
 ## Project Structure
 
@@ -145,105 +154,156 @@ This is an anonymized benchmark dataset, not real production banking data.
 drift-aware-banking-fraud-detection/
 │
 ├── configs/
+│   └── model_config.json                 # Model path, name, and classification threshold
 │
 ├── data/
-│   ├── raw/
-│   └── processed/
+│   ├── raw/                              # Original dataset (excluded from git)
+│   └── processed/                        # Cleaned dataset (excluded from git)
 │
 ├── docker/
-│
 ├── docs/
-│   └── dataset_analysis.md
+│   ├── dataset_analysis.md               # Phase 1 dataset exploration
+│   ├── PHASE_2_COMPLETION_NOTES.md       # Phase 2 ML model training documentation
+│   ├── PHASE_3_COMPLETION_NOTES.md       # Phase 3 FastAPI & Docker documentation
+│   └── api_documentation.md              # Detailed API usage and reference manual
 │
 ├── infrastructure/
 │   └── terraform/
 │
 ├── kubernetes/
+├── models/
+│   └── fraud_detection_pipeline.pkl      # Trained Scikit-learn Pipeline (excluded from git)
 │
 ├── monitoring/
-│
 ├── notebooks/
-│
 ├── pipelines/
 │   └── retraining/
 │
 ├── src/
 │   ├── api/
+│   │   ├── __init__.py
+│   │   ├── main.py                       # FastAPI application and endpoints
+│   │   ├── model_service.py              # Model loading and prediction logic
+│   │   └── schemas.py                    # Pydantic request/response schemas
 │   ├── data/
-│   │   └── inspect_dataset.py
+│   │   ├── inspect_dataset.py
+│   │   ├── analyze_duplicates.py
+│   │   └── preprocess_data.py
 │   ├── features/
+│   │   ├── inspect_features.py
+│   │   ├── split_data.py
+│   │   └── scale_features.py
 │   ├── models/
+│   │   ├── train_logistic_regression.py
+│   │   ├── train_random_forest.py
+│   │   ├── compare_models.py
+│   │   ├── tune_threshold.py
+│   │   ├── train_pipeline.py
+│   │   ├── final_evaluation.py
+│   │   ├── save_final_model.py
+│   │   └── predict.py
 │   └── monitoring/
 │
 ├── tests/
+│   └── test_api.py                       # Automated API unit & integration tests
 │
-├── .gitignore
+├── .dockerignore                         # Docker build context exclusion rules
+├── .gitignore                            # Git tracking exclusions
+├── Dockerfile                            # Production Docker image specification
 ├── LICENSE
-└── README.md
+├── pytest.ini                            # Pytest configuration
+├── README.md
+└── requirements.txt                      # Project dependencies
 ```
+
+---
 
 ## Development Roadmap
 
-- [x] Phase 1: Repository, development environment and dataset preparation foundation
-- [ ] Phase 2: Data processing and machine learning model development
-- [ ] Phase 3: Experiment tracking and model versioning with MLflow and DVC
-- [ ] Phase 4: Dockerization and CI pipeline
-- [ ] Phase 5: Terraform infrastructure and Kubernetes deployment
-- [ ] Phase 6: GitOps deployment using Argo CD
-- [ ] Phase 7: Monitoring and drift detection
-- [ ] Phase 8: Automated retraining and model redeployment
-- [ ] Phase 9: End-to-end testing and documentation
+- [x] **Phase 1:** Repository, development environment, and dataset exploration
+- [x] **Phase 2:** Data preprocessing, model training, threshold tuning, and pipeline export
+- [x] **Phase 3:** Model serving with FastAPI, request validation, and Docker containerization
+- [ ] **Phase 4:** CI/CD pipeline with GitHub Actions
+- [ ] **Phase 5:** Terraform infrastructure provisioning and AWS EKS Kubernetes deployment
+- [ ] **Phase 6:** GitOps deployment using Argo CD
+- [ ] **Phase 7:** Infrastructure monitoring (Prometheus/Grafana) and drift detection (Evidently)
+- [ ] **Phase 8:** Automated model retraining trigger and redeployment
+- [ ] **Phase 9:** End-to-end integration testing and platform demonstration
 
-## Model Evaluation Strategy
-
-Because fraudulent transactions represent only a small fraction of the dataset, the project will evaluate models using:
-
-- Precision
-- Recall
-- F1-score
-- Precision-Recall AUC (PR-AUC)
-- Confusion Matrix
-
-Accuracy alone will not be treated as sufficient evidence of model quality.
+---
 
 ## Running Locally
 
-### 1. Clone the repository
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/denitjoseph/drift-aware-banking-fraud-detection.git
 cd drift-aware-banking-fraud-detection
 ```
 
-### 2. Create a virtual environment
-
-```bash
-python -m venv .venv
-```
-
-### 3. Activate the environment
-
-Windows PowerShell:
+### 2. Set Up Virtual Environment
 
 ```powershell
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 ```
 
-### 4. Install dependencies
+### 3. Run Automated Tests
 
 ```bash
-pip install pandas numpy scikit-learn matplotlib seaborn jupyter
+pytest -v
 ```
 
-### 5. Inspect the dataset
+### 4. Run the FastAPI Application Locally
 
-After downloading and extracting the Kaggle dataset into `data/raw/`:
+```powershell
+uvicorn src.api.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+- Open Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- Open Health Endpoint: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
+
+---
+
+## Docker Build & Container Execution
+
+### 1. Build the Docker Image
 
 ```bash
-python src/data/inspect_dataset.py
+docker build -t fraud-detection-api:v1 .
 ```
 
-**Current functionality:** Dataset inspection and initial analysis only. Model training and deployment instructions will be added as those components are implemented.
+### 2. Run the Docker Container
+
+```bash
+docker run -d --name fraud-api -p 8000:8000 fraud-detection-api:v1
+```
+
+### 3. Verify Container Health
+
+```bash
+# Using curl (or browser)
+curl http://127.0.0.1:8000/health
+
+# Using PowerShell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/health"
+```
+
+### 4. View Container Logs
+
+```bash
+docker logs -f fraud-api
+```
+
+### 5. Stop and Remove the Container
+
+```bash
+docker stop fraud-api
+docker rm fraud-api
+```
+
+---
 
 ## License
 
@@ -254,7 +314,3 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 **Denit Joseph**
 
 GitHub: [@denitjoseph](https://github.com/denitjoseph)
-
----
-
-*Built as a hands-on DevOps and MLOps learning project, with an emphasis on automation, monitoring, reliability and scalable deployment.*
