@@ -242,3 +242,4 @@ class TrainingService:
 
 
 training_service = TrainingService()
+

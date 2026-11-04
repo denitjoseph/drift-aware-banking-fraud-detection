@@ -188,3 +188,4 @@ def test_list_datasets_and_trainings(client):
     trainings_res = client.get("/training")
     assert trainings_res.status_code == 200
     assert isinstance(trainings_res.json(), list)
+
