@@ -4,7 +4,7 @@ import StatCard from '../components/StatCard';
 /**
  * Main Overview Dashboard Page.
  */
-export default function Dashboard({ apiStatus, healthData, onNavigateToPrediction }) {
+export default function Dashboard({ apiStatus, healthData, onNavigateToPrediction, onNavigateToTraining }) {
   const isConnected = apiStatus === 'connected';
 
   return (
@@ -130,13 +130,21 @@ export default function Dashboard({ apiStatus, healthData, onNavigateToPredictio
             </tbody>
           </table>
 
-          <div style={{ marginTop: '20px' }}>
+          <div style={{ marginTop: '20px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             <button
               className="btn-primary"
               onClick={onNavigateToPrediction}
             >
               Test Transaction Prediction &rarr;
             </button>
+            {onNavigateToTraining && (
+              <button
+                className="btn-secondary"
+                onClick={onNavigateToTraining}
+              >
+                Upload Dataset & Retrain &rarr;
+              </button>
+            )}
           </div>
         </div>
 

@@ -94,4 +94,132 @@ export async function predictTransaction(transaction) {
   }
 }
 
+/**
+ * Upload a CSV dataset for fraud detection model training.
+ * @param {File} file - CSV file from file input
+ * @returns {Promise<Object>} DatasetUploadResponse
+ */
+export async function uploadDataset(file) {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_BASE_URL}/datasets/upload`, {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.detail || `Upload failed with HTTP ${response.status}`);
+    }
+
+    return data;
+  } catch (err) {
+    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+      throw new Error(`Unable to reach backend at ${API_BASE_URL}. Ensure FastAPI is running.`);
+    }
+    throw err;
+  }
+}
+
+/**
+ * Fetch preview rows and validation status for an uploaded dataset.
+ * @param {string} datasetId
+ * @param {number} limit
+ */
+export async function getDatasetPreview(datasetId, limit = 5) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/datasets/${datasetId}/preview?limit=${limit}`);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.detail || `Failed to fetch dataset preview: ${response.status}`);
+    }
+    return data;
+  } catch (err) {
+    throw err;
+  }
+}
+
+/**
+ * List all uploaded datasets.
+ */
+export async function listDatasets() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/datasets`);
+    const data = await response.json().catch(() => ([]));
+    if (!response.ok) {
+      throw new Error(`Failed to list datasets: ${response.status}`);
+    }
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    throw err;
+  }
+}
+
+/**
+ * Trigger asynchronous model training on an uploaded dataset.
+ * @param {string} datasetId
+ * @returns {Promise<Object>} TrainingRecord
+ */
+export async function startTraining(datasetId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/training`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ dataset_id: datasetId })
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.detail || `Failed to start training: ${response.status}`);
+    }
+    return data;
+  } catch (err) {
+    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+      throw new Error(`Unable to reach backend at ${API_BASE_URL}. Ensure FastAPI is running.`);
+    }
+    throw err;
+  }
+}
+
+/**
+ * Fetch training job status and metrics.
+ * @param {string} trainingId
+ * @returns {Promise<Object>} TrainingRecord
+ */
+export async function getTrainingStatus(trainingId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/training/${trainingId}`);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.detail || `Failed to fetch training status: ${response.status}`);
+    }
+    return data;
+  } catch (err) {
+    throw err;
+  }
+}
+
+/**
+ * List all training sessions.
+ * @returns {Promise<Array>} List of TrainingRecord
+ */
+export async function listTrainings() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/training`);
+    const data = await response.json().catch(() => ([]));
+    if (!response.ok) {
+      throw new Error(`Failed to list training runs: ${response.status}`);
+    }
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    throw err;
+  }
+}
+
 export { API_BASE_URL };

@@ -233,18 +233,22 @@ backend/.pytest_cache/
 **/.pytest_cache/
 .ipynb_checkpoints/
 
-# Raw and processed datasets (never commit large datasets)
+# Raw, processed, and uploaded datasets (never commit large datasets)
 data/raw/
 data/processed/
 backend/data/raw/
 backend/data/processed/
+backend/data/uploads/
 **/data/raw/
 **/data/processed/
+**/data/uploads/
 
 # Generated ML model artifacts & evaluation reports
 models/*.pkl
 backend/models/*.pkl
+backend/models/trained/
 **/models/*.pkl
+**/models/trained/
 models/*.csv
 models/*.json
 backend/models/*.csv

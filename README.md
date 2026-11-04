@@ -116,7 +116,7 @@ This platform uses an imbalanced credit card transaction dataset and trains an o
 
 ---
 
-## Frontend Dashboard (Phase 4)
+## Frontend Dashboard & Model Retraining
 
 The platform provides a modern, responsive web dashboard built with **React** and **Vite** in the `frontend/` directory:
 
@@ -124,6 +124,9 @@ The platform provides a modern, responsive web dashboard built with **React** an
 - **Transaction Prediction Interface:** Accepts all 30 model features (`Time`, `V1`–`V28`, `Amount`) with numerical validation.
 - **Instant Test Presets:** One-click sample loaders for verified **Legitimate** and **Fraudulent** transactions from the credit card dataset.
 - **Color-Coded Verdicts:** Highlights high-risk `FRAUD` in red and `LEGITIMATE` in green with exact probability scores and decision explanations.
+- **Dataset Upload & Validation:** Upload CSV datasets with schema validation, missing value detection, and class distribution checks.
+- **Asynchronous Model Training:** Trigger background Scikit-learn Random Forest model retraining with real-time status polling (`queued` → `running` → `completed`).
+- **Holdout Evaluation & Metrics:** View Precision, Recall, F1-Score, PR-AUC, Confusion Matrix (TN, FP, FN, TP), and candidate model artifact persistence without interrupting production serving.
 - **Model Architecture Reference:** Displays pipeline specifications, threshold tuning details, and dataset benchmark counts.
 
 ---
@@ -137,6 +140,13 @@ The inference API is located in `backend/` and validates incoming transactions a
 | `GET` | `/` | API status and root welcome message |
 | `GET` | `/health` | Liveness & readiness probe returning model loading status |
 | `POST` | `/predict` | Evaluates a transaction and returns fraud prediction |
+| `POST` | `/datasets/upload` | Uploads a CSV dataset and performs schema/target validation |
+| `GET` | `/datasets/{dataset_id}/preview` | Fetches schema information and sample rows preview |
+| `POST` | `/datasets/{dataset_id}/validate` | Validates column types, missing values, and class balance |
+| `GET` | `/datasets` | Lists all uploaded datasets with metadata |
+| `POST` | `/training` | Asynchronously triggers candidate model retraining |
+| `GET` | `/training/{training_id}` | Polls training status, metrics, and artifact details |
+| `GET` | `/training` | Lists previous training runs and evaluation histories |
 | `GET` | `/docs` | Interactive Swagger UI documentation |
 | `GET` | `/redoc` | ReDoc interactive documentation |
 
@@ -178,10 +188,12 @@ drift-aware-banking-fraud-detection/
 │   │
 │   ├── data/
 │   │   ├── raw/                          # Original dataset (excluded from git)
-│   │   └── processed/                    # Cleaned dataset (excluded from git)
+│   │   ├── processed/                    # Cleaned dataset (excluded from git)
+│   │   └── uploads/                      # Uploaded CSV datasets (excluded from git)
 │   │
 │   ├── models/
-│   │   └── fraud_detection_pipeline.pkl  # Trained Scikit-learn Pipeline (excluded from git)
+│   │   ├── fraud_detection_pipeline.pkl  # Trained Scikit-learn Pipeline (excluded from git)
+│   │   └── trained/                      # Candidate retrained pipelines (excluded from git)
 │   │
 │   ├── pipelines/
 │   │   └── retraining/
@@ -189,9 +201,11 @@ drift-aware-banking-fraud-detection/
 │   ├── src/
 │   │   ├── api/
 │   │   │   ├── __init__.py
+│   │   │   ├── dataset_service.py        # Upload handling, schema validation & preview
 │   │   │   ├── main.py                   # FastAPI application with CORS
 │   │   │   ├── model_service.py          # Model loading and prediction logic
-│   │   │   └── schemas.py                # Pydantic request/response schemas
+│   │   │   ├── schemas.py                # Pydantic request/response schemas
+│   │   │   └── training_service.py       # Asynchronous retraining & evaluation worker
 │   │   ├── data/
 │   │   │   ├── inspect_dataset.py
 │   │   │   ├── analyze_duplicates.py
@@ -212,7 +226,8 @@ drift-aware-banking-fraud-detection/
 │   │   └── monitoring/
 │   │
 │   ├── tests/
-│   │   └── test_api.py                   # Automated API unit & integration tests
+│   │   ├── test_api.py                   # Automated API unit & integration tests
+│   │   └── test_upload_training.py       # Dataset upload & model retraining tests
 │   │
 │   ├── .dockerignore
 │   ├── Dockerfile                        # Production Docker container build file
@@ -232,6 +247,7 @@ drift-aware-banking-fraud-detection/
 │   │   │   └── StatCard.jsx              # Summary metric card
 │   │   ├── pages/
 │   │   │   ├── Dashboard.jsx             # Platform overview page
+│   │   │   ├── DatasetTraining.jsx       # Dataset upload & retraining dashboard
 │   │   │   ├── ModelInfo.jsx             # Architecture reference page
 │   │   │   └── Prediction.jsx            # Transaction evaluation page
 │   │   ├── services/

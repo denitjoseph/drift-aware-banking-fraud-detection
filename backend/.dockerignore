@@ -12,6 +12,9 @@ __pycache__
 # Large datasets
 data/
 
+# Trained candidate models
+models/trained/
+
 # Tests and configs
 tests/
 pytest.ini

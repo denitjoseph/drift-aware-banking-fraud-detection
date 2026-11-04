@@ -119,3 +119,94 @@ class HealthResponse(BaseModel):
         description="Configured classification threshold"
     )
 
+
+
+# ============================================================================
+# Dataset Upload & Validation Schemas
+# ============================================================================
+
+from typing import Any, Dict, List
+
+
+class DatasetValidationResult(BaseModel):
+    """Result of schema and content validation on an uploaded dataset."""
+
+    is_valid: bool = Field(..., description="Whether the dataset satisfies requirements for ML training")
+    errors: List[str] = Field(default_factory=list, description="List of blocking validation errors")
+    warnings: List[str] = Field(default_factory=list, description="Non-blocking recommendations")
+    missing_values: Dict[str, int] = Field(default_factory=dict, description="Count of nulls per column")
+    class_distribution: Optional[Dict[str, int]] = Field(
+        None, description="Count of binary targets (Class 0 and Class 1)"
+    )
+    detected_columns: List[str] = Field(default_factory=list, description="All columns found in CSV")
+
+
+class DatasetUploadResponse(BaseModel):
+    """Metadata returned upon successful CSV upload."""
+
+    dataset_id: str = Field(..., description="Unique identifier for the stored dataset")
+    filename: str = Field(..., description="Original filename")
+    file_size_bytes: int = Field(..., description="Size in bytes")
+    uploaded_at: str = Field(..., description="ISO 8601 upload timestamp")
+    row_count: int = Field(..., description="Total rows in dataset")
+    column_count: int = Field(..., description="Total columns in dataset")
+    validation: DatasetValidationResult
+
+
+class DatasetPreviewResponse(BaseModel):
+    """Detailed preview of an uploaded dataset."""
+
+    dataset_id: str
+    filename: str
+    row_count: int
+    column_count: int
+    columns: List[str]
+    sample_rows: List[Dict[str, Any]]
+    validation: DatasetValidationResult
+
+
+# ============================================================================
+# Model Training Schemas
+# ============================================================================
+
+class TrainingStartRequest(BaseModel):
+    """Payload to trigger model training on a validated dataset."""
+
+    dataset_id: str = Field(..., description="Identifier of the uploaded dataset to train on")
+
+
+class ConfusionMatrixInfo(BaseModel):
+    """Breakdown of holdout evaluation confusion matrix."""
+
+    true_negatives: int
+    false_positives: int
+    false_negatives: int
+    true_positives: int
+
+
+class TrainingMetrics(BaseModel):
+    """Holdout evaluation metrics computed on the test split."""
+
+    precision: float
+    recall: float
+    f1_score: float
+    pr_auc: float
+    confusion_matrix: ConfusionMatrixInfo
+    threshold: float
+    total_samples: int
+    train_samples: int
+    test_samples: int
+
+
+class TrainingRecord(BaseModel):
+    """Status and metrics of a model training session."""
+
+    training_id: str
+    dataset_id: str
+    status: str = Field(..., description="'queued' | 'running' | 'completed' | 'failed'")
+    created_at: str
+    started_at: Optional[str] = None
+    completed_at: Optional[str] = None
+    error: Optional[str] = None
+    metrics: Optional[TrainingMetrics] = None
+    candidate_model_saved: bool = False

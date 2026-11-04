@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
 import Prediction from './pages/Prediction';
+import DatasetTraining from './pages/DatasetTraining';
 import ModelInfo from './pages/ModelInfo';
 import { checkHealth } from './services/api';
 
@@ -61,11 +62,18 @@ export default function App() {
               apiStatus={apiStatus}
               healthData={healthData}
               onNavigateToPrediction={() => setActiveTab('prediction')}
+              onNavigateToTraining={() => setActiveTab('dataset-training')}
             />
           )}
 
           {activeTab === 'prediction' && (
             <Prediction
+              apiStatus={apiStatus}
+            />
+          )}
+
+          {activeTab === 'dataset-training' && (
+            <DatasetTraining
               apiStatus={apiStatus}
             />
           )}
