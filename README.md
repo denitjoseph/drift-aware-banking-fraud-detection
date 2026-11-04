@@ -2,7 +2,7 @@
 
 An end-to-end MLOps platform for detecting fraudulent banking transactions, monitoring model performance and data drift, and automating model retraining and deployment on Kubernetes.
 
-> **Project Status:** Phase 3 Completed — Model Serving with FastAPI and Docker
+> **Project Status:** Phase 4 Completed — Clean Backend/Frontend Architecture with React & Vite Dashboard
 
 ---
 
@@ -13,9 +13,11 @@ This project builds an industrial-grade MLOps platform for banking fraud detecti
 The platform combines machine learning to identify fraudulent transactions with automated DevOps and MLOps practices across the full model lifecycle:
 
 - Train, evaluate, and tune fraud detection models.
+- Modularized service layout: decoupled `backend/` and `frontend/` microservices.
 - Package inference services into lightweight, secure Docker containers.
 - Deploy and orchestrate model services on Kubernetes.
 - Provide health probes, request validation, and interactive API documentation.
+- Serve a modern, responsive React/Vite dashboard for real-time transaction scoring.
 - Monitor application performance, metrics, and data drift *(upcoming)*.
 - Automate retraining and GitOps deployment *(upcoming)*.
 
@@ -31,7 +33,7 @@ This platform uses an imbalanced credit card transaction dataset and trains an o
 
 ---
 
-## Planned Architecture
+## Architecture
 
 ```text
               DATA SOURCE
@@ -65,7 +67,11 @@ This platform uses an imbalanced credit card transaction dataset and trains an o
           KUBERNETES DEPLOYMENT
                    |
                    v
-             MODEL API  <--- [FASTAPI SERVING]
+             BACKEND API <--- [FASTAPI SERVING]
+                   ^
+                   |  (REST API / CORS)
+                   |
+         REACT DASHBOARD <--- [PHASE 4 COMPLETED]
                    |
           -------------------
           |                 |
@@ -93,9 +99,10 @@ This platform uses an imbalanced credit card transaction dataset and trains an o
 | Category | Technologies | Status |
 |---|---|---|
 | Programming | Python 3.13 | Active |
+| Backend API | FastAPI, Pydantic, Uvicorn | Active |
 | Data Processing | Pandas, NumPy | Active |
 | Machine Learning | Scikit-learn (Random Forest Pipeline) | Active |
-| API Development | FastAPI, Pydantic, Uvicorn | Active |
+| Frontend Dashboard | React 18, Vite 6, JavaScript, CSS | Active |
 | Containerization | Docker (python:3.13-slim) | Active |
 | Testing | Pytest, FastAPI TestClient | Active |
 | Experiment Tracking | MLflow | Planned |
@@ -109,9 +116,21 @@ This platform uses an imbalanced credit card transaction dataset and trains an o
 
 ---
 
+## Frontend Dashboard (Phase 4)
+
+The platform provides a modern, responsive web dashboard built with **React** and **Vite** in the `frontend/` directory:
+
+- **Live Microservice Monitoring:** Polls `GET /health` every 15 seconds to display real-time backend connectivity, loaded model name, and active classification threshold.
+- **Transaction Prediction Interface:** Accepts all 30 model features (`Time`, `V1`–`V28`, `Amount`) with numerical validation.
+- **Instant Test Presets:** One-click sample loaders for verified **Legitimate** and **Fraudulent** transactions from the credit card dataset.
+- **Color-Coded Verdicts:** Highlights high-risk `FRAUD` in red and `LEGITIMATE` in green with exact probability scores and decision explanations.
+- **Model Architecture Reference:** Displays pipeline specifications, threshold tuning details, and dataset benchmark counts.
+
+---
+
 ## API Endpoints
 
-The inference API is built using **FastAPI** and validates incoming transactions against 30 required numerical features using **Pydantic**:
+The inference API is located in `backend/` and validates incoming transactions against 30 required numerical features using **Pydantic**:
 
 | Method | Endpoint | Description |
 |---|---|---|
@@ -153,67 +172,96 @@ The inference API is built using **FastAPI** and validates incoming transactions
 ```text
 drift-aware-banking-fraud-detection/
 │
-├── configs/
-│   └── model_config.json                 # Model path, name, and classification threshold
+├── backend/                              # Backend inference service and ML code
+│   ├── configs/
+│   │   └── model_config.json             # Model path, name, and classification threshold
+│   │
+│   ├── data/
+│   │   ├── raw/                          # Original dataset (excluded from git)
+│   │   └── processed/                    # Cleaned dataset (excluded from git)
+│   │
+│   ├── models/
+│   │   └── fraud_detection_pipeline.pkl  # Trained Scikit-learn Pipeline (excluded from git)
+│   │
+│   ├── pipelines/
+│   │   └── retraining/
+│   │
+│   ├── src/
+│   │   ├── api/
+│   │   │   ├── __init__.py
+│   │   │   ├── main.py                   # FastAPI application with CORS
+│   │   │   ├── model_service.py          # Model loading and prediction logic
+│   │   │   └── schemas.py                # Pydantic request/response schemas
+│   │   ├── data/
+│   │   │   ├── inspect_dataset.py
+│   │   │   ├── analyze_duplicates.py
+│   │   │   └── preprocess_data.py
+│   │   ├── features/
+│   │   │   ├── inspect_features.py
+│   │   │   ├── split_data.py
+│   │   │   └── scale_features.py
+│   │   ├── models/
+│   │   │   ├── train_logistic_regression.py
+│   │   │   ├── train_random_forest.py
+│   │   │   ├── compare_models.py
+│   │   │   ├── tune_threshold.py
+│   │   │   ├── train_pipeline.py
+│   │   │   ├── final_evaluation.py
+│   │   │   ├── save_final_model.py
+│   │   │   └── predict.py
+│   │   └── monitoring/
+│   │
+│   ├── tests/
+│   │   └── test_api.py                   # Automated API unit & integration tests
+│   │
+│   ├── .dockerignore
+│   ├── Dockerfile                        # Production Docker container build file
+│   ├── pytest.ini                        # Pytest configuration
+│   └── requirements.txt                  # Python dependencies
 │
-├── data/
-│   ├── raw/                              # Original dataset (excluded from git)
-│   └── processed/                        # Cleaned dataset (excluded from git)
+├── frontend/                             # Frontend React + Vite Dashboard
+│   ├── public/
+│   │   └── shield.svg
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── ApiStatus.jsx             # Live health status indicator
+│   │   │   ├── Navbar.jsx                # Header component
+│   │   │   ├── PredictionForm.jsx        # 30-feature transaction input form
+│   │   │   ├── PredictionResult.jsx      # Verdict display component
+│   │   │   ├── Sidebar.jsx               # Navigation sidebar
+│   │   │   └── StatCard.jsx              # Summary metric card
+│   │   ├── pages/
+│   │   │   ├── Dashboard.jsx             # Platform overview page
+│   │   │   ├── ModelInfo.jsx             # Architecture reference page
+│   │   │   └── Prediction.jsx            # Transaction evaluation page
+│   │   ├── services/
+│   │   │   └── api.js                    # Fetch API client
+│   │   ├── styles/
+│   │   │   └── dashboard.css             # SaaS theme stylesheet
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   ├── .env.example
+│   ├── .gitignore
+│   ├── index.html
+│   ├── package.json
+│   └── vite.config.js
 │
-├── docker/
+├── infrastructure/
+│   └── terraform/
+│
+├── kubernetes/
+├── monitoring/
+├── notebooks/
 ├── docs/
 │   ├── dataset_analysis.md               # Phase 1 dataset exploration
 │   ├── PHASE_2_COMPLETION_NOTES.md       # Phase 2 ML model training documentation
 │   ├── PHASE_3_COMPLETION_NOTES.md       # Phase 3 FastAPI & Docker documentation
 │   └── api_documentation.md              # Detailed API usage and reference manual
 │
-├── infrastructure/
-│   └── terraform/
-│
-├── kubernetes/
-├── models/
-│   └── fraud_detection_pipeline.pkl      # Trained Scikit-learn Pipeline (excluded from git)
-│
-├── monitoring/
-├── notebooks/
-├── pipelines/
-│   └── retraining/
-│
-├── src/
-│   ├── api/
-│   │   ├── __init__.py
-│   │   ├── main.py                       # FastAPI application and endpoints
-│   │   ├── model_service.py              # Model loading and prediction logic
-│   │   └── schemas.py                    # Pydantic request/response schemas
-│   ├── data/
-│   │   ├── inspect_dataset.py
-│   │   ├── analyze_duplicates.py
-│   │   └── preprocess_data.py
-│   ├── features/
-│   │   ├── inspect_features.py
-│   │   ├── split_data.py
-│   │   └── scale_features.py
-│   ├── models/
-│   │   ├── train_logistic_regression.py
-│   │   ├── train_random_forest.py
-│   │   ├── compare_models.py
-│   │   ├── tune_threshold.py
-│   │   ├── train_pipeline.py
-│   │   ├── final_evaluation.py
-│   │   ├── save_final_model.py
-│   │   └── predict.py
-│   └── monitoring/
-│
-├── tests/
-│   └── test_api.py                       # Automated API unit & integration tests
-│
-├── .dockerignore                         # Docker build context exclusion rules
-├── .gitignore                            # Git tracking exclusions
-├── Dockerfile                            # Production Docker image specification
+├── .dockerignore                         # Root Docker build context exclusion rules
+├── .gitignore                            # Root Git tracking exclusions
 ├── LICENSE
-├── pytest.ini                            # Pytest configuration
-├── README.md
-└── requirements.txt                      # Project dependencies
+└── README.md
 ```
 
 ---
@@ -223,12 +271,13 @@ drift-aware-banking-fraud-detection/
 - [x] **Phase 1:** Repository, development environment, and dataset exploration
 - [x] **Phase 2:** Data preprocessing, model training, threshold tuning, and pipeline export
 - [x] **Phase 3:** Model serving with FastAPI, request validation, and Docker containerization
-- [ ] **Phase 4:** CI/CD pipeline with GitHub Actions
-- [ ] **Phase 5:** Terraform infrastructure provisioning and AWS EKS Kubernetes deployment
-- [ ] **Phase 6:** GitOps deployment using Argo CD
-- [ ] **Phase 7:** Infrastructure monitoring (Prometheus/Grafana) and drift detection (Evidently)
-- [ ] **Phase 8:** Automated model retraining trigger and redeployment
-- [ ] **Phase 9:** End-to-end integration testing and platform demonstration
+- [x] **Phase 4:** Frontend dashboard with React, Vite, and real-time fraud prediction
+- [ ] **Phase 5:** CI/CD pipeline with GitHub Actions
+- [ ] **Phase 6:** Terraform infrastructure provisioning and AWS EKS Kubernetes deployment
+- [ ] **Phase 7:** GitOps deployment using Argo CD
+- [ ] **Phase 8:** Infrastructure monitoring (Prometheus/Grafana) and drift detection (Evidently)
+- [ ] **Phase 9:** Automated model retraining trigger and redeployment
+- [ ] **Phase 10:** End-to-end integration testing and platform demonstration
 
 ---
 
@@ -241,28 +290,41 @@ git clone https://github.com/denitjoseph/drift-aware-banking-fraud-detection.git
 cd drift-aware-banking-fraud-detection
 ```
 
-### 2. Set Up Virtual Environment
+### 2. Run the Backend API
 
 ```powershell
+# Navigate to the backend directory
+cd backend
+
+# Set up Python virtual environment
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+
+# Run automated tests
+python -m pytest -v
+
+# Start FastAPI server
+uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 3. Run Automated Tests
+- Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
+- Health Endpoint: [http://localhost:8000/health](http://localhost:8000/health)
+
+### 3. Run the Frontend Dashboard
+
+Open a second terminal window from the project root:
 
 ```bash
-pytest -v
+# Navigate to the frontend directory
+cd frontend
+
+# Install dependencies and start Vite dev server
+npm install
+npm run dev
 ```
 
-### 4. Run the FastAPI Application Locally
-
-```powershell
-uvicorn src.api.main:app --reload --host 127.0.0.1 --port 8000
-```
-
-- Open Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- Open Health Endpoint: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
+- Open Dashboard: **[http://localhost:5173](http://localhost:5173)**
 
 ---
 
@@ -270,7 +332,14 @@ uvicorn src.api.main:app --reload --host 127.0.0.1 --port 8000
 
 ### 1. Build the Docker Image
 
+You can build the Docker image using either of the following commands:
+
 ```bash
+# Build pointing to the backend directory
+docker build -t fraud-detection-api:v1 backend/
+
+# Or from inside the backend directory:
+cd backend
 docker build -t fraud-detection-api:v1 .
 ```
 
@@ -283,11 +352,7 @@ docker run -d --name fraud-api -p 8000:8000 fraud-detection-api:v1
 ### 3. Verify Container Health
 
 ```bash
-# Using curl (or browser)
-curl http://127.0.0.1:8000/health
-
-# Using PowerShell
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/health"
+curl http://localhost:8000/health
 ```
 
 ### 4. View Container Logs

@@ -1,0 +1,17 @@
+# Virtual environments
+.venv
+venv
+env
+
+# Python bytecode and caches
+__pycache__
+*.py[cod]
+*$py.class
+.pytest_cache
+
+# Large datasets
+data/
+
+# Tests and configs
+tests/
+pytest.ini
