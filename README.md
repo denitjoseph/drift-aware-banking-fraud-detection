@@ -251,11 +251,11 @@ drift-aware-banking-fraud-detection/
 │
 ├── kubernetes/
 ├── monitoring/
-├── notebooks/
 ├── docs/
 │   ├── dataset_analysis.md               # Phase 1 dataset exploration
 │   ├── PHASE_2_COMPLETION_NOTES.md       # Phase 2 ML model training documentation
 │   ├── PHASE_3_COMPLETION_NOTES.md       # Phase 3 FastAPI & Docker documentation
+│   ├── PHASE_4_COMPLETION_NOTES.md       # Phase 4 React/Vite dashboard documentation
 │   └── api_documentation.md              # Detailed API usage and reference manual
 │
 ├── .dockerignore                         # Root Docker build context exclusion rules
