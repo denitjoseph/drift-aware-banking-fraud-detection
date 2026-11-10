@@ -162,3 +162,4 @@ Dashboard will open at: `http://localhost:5173`
 - **Kubernetes Deployment**: Author Kubernetes manifests (`Deployment`, `Service`, `HorizontalPodAutoscaler`, `Ingress`).
 - **Helm Packaging**: Parameterize backend and frontend configuration for cluster environments.
 - **Monitoring & Observability**: Integrate Prometheus metrics exporter and Grafana dashboards for drift detection.
+
